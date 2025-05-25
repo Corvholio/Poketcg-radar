@@ -1,0 +1,10 @@
+requests              # HTTP requests to APIs
+pandas                # Data handling
+tqdm                  # Progress bar for loops
+schedule              # Task scheduling (optional)
+retrying              # Retry failed requests (optional)
+SQLAlchemy            # Advanced DB handling (optional for SQLite/Postgres)
+tabulate              # Pretty tables for CLI/logs (optional)
+streamlit             # For future dashboards (optional)
+matplotlib            # Visualization (optional)
+seaborn               # Visualization (optional)
