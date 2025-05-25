@@ -1,6 +1,4 @@
-# Let's recreate the README content as a pure .txt file
-
-readme_txt = """# 🔥 poketcg-radar 🔥
+# 🔥 poketcg-radar 🔥
 Welcome to **poketcg-radar**, your automated radar system for tracking Pokémon TCG card and set trends! Whether you’re a casual collector or a serious data nerd, this project helps you monitor prices, spot trends, and build dashboards that’ll make you the master of Pokémon card insights.
 
 ---
