@@ -29,10 +29,10 @@ def get_cards_for_set(set_name, set_id):
         response = requests.get(url)
         if response.status_code == 200:
             cards = response.json()
-            print(f"✅ Successfully fetched {len(cards)} cards for {set_name}")
+            print(f"✅ Successfully fetched {len(cards)} cards for {set_name}", flush=True)
             return cards
         else:
-            print(f"⚠️ Failed to fetch data for {set_name} (Status {response.status_code}), retrying in 10 minutes...")
+            print(f"⚠️ Failed to fetch data for {set_name} (Status {response.status_code}), retrying in 10 minutes...", flush=True)
             time.sleep(10 * 60)
 
 def save_data():
@@ -47,7 +47,7 @@ def save_data():
     for idx, s in enumerate(sets, start=1):
         set_name = s.get('name')
         set_id = s.get('id')
-        print(f"[{idx}/{total_sets}] Fetching cards for set: {set_name} (ID: {set_id})")
+        print(f"[{idx}/{total_sets}] Fetching cards for set: {set_name} (ID: {set_id})", flush=True)
         cards = get_cards_for_set(set_name, set_id)
         if cards:
             all_cards.extend(cards)
@@ -66,11 +66,11 @@ def save_data():
     timestamp = datetime.now().strftime("%Y-%m-%d")
     cards_df.to_csv("data/latest/pokemon_cards_full_info.csv", index=False)
     sets_df.to_csv("data/latest/pokemon_sets_summary.csv", index=False)
-    print("✅ Latest datasets saved.")
+    print("✅ Latest datasets saved.", flush=True)
 
     cards_df.to_csv(f"data/archive/pokemon_cards_full_info_{timestamp}.csv", index=False)
     sets_df.to_csv(f"data/archive/pokemon_sets_summary_{timestamp}.csv", index=False)
-    print("✅ Archive copies saved.")
+    print("✅ Archive copies saved.", flush=True)
 
     hist_file = "data/pokemon_price_history.csv"
     price_column = f"Price_{timestamp}"
@@ -82,7 +82,7 @@ def save_data():
         hist_df = cards_df[['id', 'name', 'set_name', 'Price']].rename(columns={'Price': price_column})
     
     hist_df.to_csv(hist_file, index=False)
-    print("✅ Historical price tracking updated.")
+    print("✅ Historical price tracking updated.", flush=True)
 
 if __name__ == "__main__":
     save_data()
