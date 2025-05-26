@@ -1,92 +1,64 @@
-
+import os
 import requests
 import pandas as pd
+from datetime import datetime
 import time
-import ast
 
-def extract_avg(stats):
-    if isinstance(stats, str):
+# Constants
+DATA_FOLDER = "data"
+ARCHIVE_FOLDER = "archive"
+SETS_URL = "https://raw.githubusercontent.com/nicholas/poketcg-radar/main/data/pokemon_sets_summary.csv"
+CARDS_BASE_URL = "https://www.pokedata.io/api/cards?set_name={}"
+
+# Ensure folders exist
+os.makedirs(DATA_FOLDER, exist_ok=True)
+os.makedirs(ARCHIVE_FOLDER, exist_ok=True)
+
+# Load sets
+sets_df = pd.read_csv(SETS_URL)
+
+# Collect data for all sets
+all_cards = []
+for index, row in sets_df.iterrows():
+    set_name = row['name']
+    set_id = row['id']
+    print(f"Fetching cards for set: {set_name} (ID: {set_id})")
+    retry_count = 0
+
+    while True:
         try:
-            stats = ast.literal_eval(stats)
-        except:
-            stats = []
-    if isinstance(stats, list) and stats:
-        avg = stats[0].get('avg')
-        return avg if avg is not None else 0
-    return 0
+            response = requests.get(CARDS_BASE_URL.format(set_name.replace(' ', '+')))
+            if response.status_code == 200:
+                cards = response.json()
+                for card in cards:
+                    all_cards.append(card)
+                print(f"✅ Successfully fetched {len(cards)} cards for {set_name}")
+                break
+            elif response.status_code == 429:
+                retry_count += 1
+                wait_minutes = 10
+                print(f"⚠️ Rate limit encountered for {set_name} (Attempt {retry_count}). Waiting {wait_minutes} minutes before retry.")
+                time.sleep(wait_minutes * 60)
+            else:
+                print(f"❌ Failed to fetch data for {set_name}. Status code: {response.status_code}")
+                break
+        except Exception as e:
+            print(f"❌ Error fetching data for {set_name}: {e}")
+            retry_count += 1
+            wait_minutes = 10
+            print(f"Waiting {wait_minutes} minutes before retry.")
+            time.sleep(wait_minutes * 60)
 
-def get_all_sets():
-    url = "https://www.pokedata.io/_next/data/3UYacdm8ZflJ3oxZlMwiK/sets.json"
-    response = requests.get(url)
-    data = response.json()
-    sets = data['pageProps']['setInfoArr']
-    return sets
+# Convert to DataFrame
+cards_df = pd.DataFrame(all_cards)
 
-def get_cards_for_set(set_name, set_id):
-    url = f"https://www.pokedata.io/api/cards?set_name={set_name.replace(' ', '+')}"
-    attempts = 0
-    while attempts < 3:
-        response = requests.get(url)
-        if response.status_code == 200:
-            cards = response.json()
-            cards_data = []
-            for card in cards:
-                avg_price = extract_avg(card.get('stats', []))
-                card_data = {
-                    "hot": card.get("hot"),
-                    "id": card.get("id"),
-                    "img_url": card.get("img_url"),
-                    "language": card.get("language"),
-                    "live": card.get("live"),
-                    "name": card.get("name"),
-                    "num": card.get("num"),
-                    "release_date": card.get("release_date"),
-                    "secret": card.get("secret"),
-                    "set_code": card.get("set_code"),
-                    "set_id": card.get("set_id"),
-                    "set_name": card.get("set_name"),
-                    "Price": avg_price
-                }
-                cards_data.append(card_data)
-            return cards_data
-        else:
-            print(f"Failed to fetch data for {set_name} (Status {response.status_code}), retrying...")
-            attempts += 1
-            time.sleep(10)
-    print(f"Failed to fetch data for {set_name} after 3 attempts.")
-    return []
+# Save latest data
+latest_cards_file = os.path.join(DATA_FOLDER, "pokemon_cards_full_info.csv")
+cards_df.to_csv(latest_cards_file, index=False)
+print(f"✅ Latest data saved to {latest_cards_file}")
 
-def save_data():
-    sets = get_all_sets()
-    all_cards = []
-    sets_summary = []
-
-    for s in sets:
-        set_name = s.get('name')
-        set_id = s.get('id')
-        print(f"Fetching cards for set: {set_name} (ID: {set_id})")
-        cards = get_cards_for_set(set_name, set_id)
-        if cards:
-            all_cards.extend(cards)
-            total_cards = len(cards)
-            total_value = sum(c.get('Price', 0) for c in cards)
-            sets_summary.append({
-                "Set Name": set_name,
-                "Set ID": set_id,
-                "Total Cards": total_cards,
-                "Total Estimated Value": total_value
-            })
-
-    # Save card data
-    cards_df = pd.DataFrame(all_cards)
-    cards_df.to_csv("data/pokemon_cards_full_info.csv", index=False)
-
-    # Save sets summary
-    sets_df = pd.DataFrame(sets_summary)
-    sets_df.to_csv("data/pokemon_sets_summary.csv", index=False)
-
-    # Placeholder for price history file
-    # When the scraper runs daily, you can merge this into a master price history
-
-if __name__ == "__main__":
-    save_data()
+# Save archive
+timestamp = datetime.now().strftime("%Y-%m-%d")
+archive_cards_file = os.path.join(ARCHIVE_FOLDER, f"pokemon_cards_full_info_{timestamp}.csv")
+cards_df.to_csv(archive_cards_file, index=False)
+print(f"✅ Archived data saved to {archive_cards_file}")
