@@ -4,6 +4,7 @@ import pandas as pd
 import time
 import ast
 from datetime import datetime
+import urllib.parse
 
 def extract_avg(stats):
     if isinstance(stats, str):
@@ -24,13 +25,18 @@ def get_all_sets():
     return sets
 
 def get_cards_for_set(set_name, set_id):
-    url = f"https://www.pokedata.io/api/cards?set_name={set_name.replace(' ', '+')}"
+    encoded_set_name = urllib.parse.quote(set_name)
+    url = f"https://www.pokedata.io/api/cards?set_name={encoded_set_name}"
     while True:
         response = requests.get(url)
         if response.status_code == 200:
             cards = response.json()
-            print(f"✅ Successfully fetched {len(cards)} cards for {set_name}", flush=True)
-            return cards
+            if cards and len(cards) > 0:
+                print(f"✅ Successfully fetched {len(cards)} cards for {set_name}", flush=True)
+                return cards
+            else:
+                print(f"⚠️ Fetched 0 cards for {set_name}, retrying in 10 minutes...", flush=True)
+                time.sleep(10 * 60)
         else:
             print(f"⚠️ Failed to fetch data for {set_name} (Status {response.status_code}), retrying in 10 minutes...", flush=True)
             time.sleep(10 * 60)
@@ -86,3 +92,4 @@ def save_data():
 
 if __name__ == "__main__":
     save_data()
+
