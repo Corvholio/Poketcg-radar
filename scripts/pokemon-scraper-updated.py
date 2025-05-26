@@ -7,7 +7,7 @@ import time
 # Constants
 DATA_FOLDER = "data"
 ARCHIVE_FOLDER = "archive"
-SETS_URL = "https://raw.githubusercontent.com/nicholas/poketcg-radar/main/data/pokemon_sets_summary.csv"
+SETS_URL = "https://raw.githubusercontent.com/corvholio/poketcg-radar/main/data/pokemon_sets_summary.csv"
 CARDS_BASE_URL = "https://www.pokedata.io/api/cards?set_name={}"
 
 # Ensure folders exist
