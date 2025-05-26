@@ -23,7 +23,7 @@ jobs:
           python -m pip install --upgrade pip
           pip install -r requirements.txt
 
-      - name: Run updated Pokémon scraper
+      - name: Run Pokémon scraper
         run: |
           python scripts/pokemon-scraper-updated.py
 
@@ -31,7 +31,6 @@ jobs:
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions"
-          git add data/pokemon_cards_full_info.csv data/pokemon_sets_summary.csv
-          git commit -m "TCG Update: pokemon_cards_full_info.csv and pokemon_sets_summary.csv updated" || echo "No changes to commit"
+          git add data/latest/*.csv data/archive/*.csv data/pokemon_price_history.csv
+          git commit -m "Automated TCG data update" || echo "No changes to commit"
           git push
-        continue-on-error: true
