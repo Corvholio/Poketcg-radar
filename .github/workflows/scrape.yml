@@ -3,7 +3,7 @@ name: Pokémon TCG Data Scraper
 on:
   schedule:
     - cron: '0 3 * * *'  # Runs at 3 AM UTC daily
-  workflow_dispatch:  # Allows manual trigger from GitHub
+  workflow_dispatch:      # Allows manual trigger from GitHub
 
 jobs:
   run-scraper:
@@ -25,7 +25,7 @@ jobs:
 
       - name: Run updated Pokémon scraper
         run: |
-          python /scripts/pokemon-scraper-updated.py
+          python scripts/pokemon-scraper-updated.py
 
       - name: Commit updated data
         run: |
@@ -34,4 +34,4 @@ jobs:
           git add data/pokemon_cards_full_info.csv data/pokemon_sets_summary.csv
           git commit -m "TCG Update: pokemon_cards_full_info.csv and pokemon_sets_summary.csv updated" || echo "No changes to commit"
           git push
-      continue-on-error: true
+        continue-on-error: true
