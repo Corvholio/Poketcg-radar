@@ -63,9 +63,11 @@ def save_data():
         print(f"[{idx}/{total_sets}] Fetching cards for set: {set_name} (ID: {set_id})", flush=True)
         cards = get_cards_for_set(set_name, set_id)
         if cards:
+            for c in cards:
+                c['Price'] = round(extract_avg(c.get('stats', [])), 2)  # Final clean Price column
             all_cards.extend(cards)
             total_cards = len(cards)
-            total_value = sum(extract_avg(c.get('stats', [])) for c in cards)
+            total_value = sum(c['Price'] for c in cards)
             sets_summary.append({
                 "Set Name": set_name,
                 "Set ID": set_id,
@@ -89,8 +91,8 @@ def save_data():
     price_column = f"Price_{timestamp}"
     if os.path.exists(hist_file):
         hist_df = pd.read_csv(hist_file)
-        latest_prices = cards_df[['id', 'Price']].rename(columns={'Price': price_column})
-        hist_df = pd.merge(hist_df, latest_prices, on='id', how='outer')
+        latest_prices = cards_df[['id', 'name', 'set_name', 'Price']].rename(columns={'Price': price_column})
+        hist_df = pd.merge(hist_df, latest_prices, on=['id', 'name', 'set_name'], how='outer')
     else:
         hist_df = cards_df[['id', 'name', 'set_name', 'Price']].rename(columns={'Price': price_column})
     
