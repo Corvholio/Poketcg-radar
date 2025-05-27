@@ -27,7 +27,9 @@ def get_all_sets():
 def get_cards_for_set(set_name, set_id):
     encoded_set_name = urllib.parse.quote(set_name)
     url = f"https://www.pokedata.io/api/cards?set_name={encoded_set_name}"
-    while True:
+    
+    attempts = 0
+    while attempts < 2:  # Try twice if 0 cards
         response = requests.get(url)
         if response.status_code == 200:
             cards = response.json()
@@ -35,8 +37,13 @@ def get_cards_for_set(set_name, set_id):
                 print(f"✅ Successfully fetched {len(cards)} cards for {set_name}", flush=True)
                 return cards
             else:
-                print(f"⚠️ Fetched 0 cards for {set_name}, retrying in 10 minutes...", flush=True)
-                time.sleep(10 * 60)
+                attempts += 1
+                if attempts < 2:
+                    print(f"⚠️ Fetched 0 cards for {set_name}, retrying in 10 minutes...", flush=True)
+                    time.sleep(10 * 60)
+                else:
+                    print(f"⚠️ Skipping {set_name} after 2 attempts with 0 cards.", flush=True)
+                    return []
         else:
             print(f"⚠️ Failed to fetch data for {set_name} (Status {response.status_code}), retrying in 10 minutes...", flush=True)
             time.sleep(10 * 60)
