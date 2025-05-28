@@ -3,7 +3,7 @@ name: Pokémon TCG Data Scraper
 on:
   schedule:
     - cron: '0 3 * * *'  # Runs at 3 AM UTC daily
-  workflow_dispatch:      # Allows manual trigger from GitHub
+  workflow_dispatch:  # Allows manual trigger from GitHub
 
 jobs:
   run-scraper:
@@ -31,6 +31,7 @@ jobs:
         run: |
           git config --local user.email "actions@github.com"
           git config --local user.name "GitHub Actions"
+          git remote set-url origin https://x-access-token:${{ secrets.GH_PAT }}@github.com/Corvholio/Poketcg-radar.git
           git add data/latest/*.csv data/archive/*.csv data/pokemon_price_history.csv
           git commit -m "Automated TCG data update" || echo "No changes to commit"
           git push
