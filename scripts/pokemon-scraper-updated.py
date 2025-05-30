@@ -29,7 +29,7 @@ def get_cards_for_set(set_name, set_id):
     url = f"https://www.pokedata.io/api/cards?set_name={encoded_set_name}"
     
     attempts = 0
-    while attempts < 2:  # Try twice if 0 cards
+    while attempts < 2:
         response = requests.get(url)
         if response.status_code == 200:
             cards = response.json()
@@ -64,7 +64,7 @@ def save_data():
         cards = get_cards_for_set(set_name, set_id)
         if cards:
             for c in cards:
-                c['Price'] = round(extract_avg(c.get('stats', [])), 2)  # Final clean Price column
+                c['Price'] = round(extract_avg(c.get('stats', [])), 2)
             all_cards.extend(cards)
             total_cards = len(cards)
             total_value = sum(c['Price'] for c in cards)
@@ -87,17 +87,22 @@ def save_data():
     sets_df.to_csv(f"data/archive/pokemon_sets_summary_{timestamp}.csv", index=False)
     print("✅ Archive copies saved.", flush=True)
 
-    hist_file = "data/pokemon_price_history.csv"
-    price_column = f"Price_{timestamp}"
-    if os.path.exists(hist_file):
-        hist_df = pd.read_csv(hist_file)
-        latest_prices = cards_df[['id', 'name', 'set_name', 'Price']].rename(columns={'Price': price_column})
-        hist_df = pd.merge(hist_df, latest_prices, on=['id', 'name', 'set_name'], how='outer')
+    # Only append to price history on Sundays
+    if datetime.now().weekday() == 6:  # 6 is Sunday
+        print("📈 Sunday detected! Updating historical price tracking.", flush=True)
+        hist_file = "data/pokemon_price_history.csv"
+        price_column = f"Price_{timestamp}"
+        if os.path.exists(hist_file):
+            hist_df = pd.read_csv(hist_file)
+            latest_prices = cards_df[['id', 'name', 'set_name', 'Price']].rename(columns={'Price': price_column})
+            hist_df = pd.merge(hist_df, latest_prices, on=['id', 'name', 'set_name'], how='outer')
+        else:
+            hist_df = cards_df[['id', 'name', 'set_name', 'Price']].rename(columns={'Price': price_column})
+        
+        hist_df.to_csv(hist_file, index=False)
+        print("✅ Historical price tracking updated.", flush=True)
     else:
-        hist_df = cards_df[['id', 'name', 'set_name', 'Price']].rename(columns={'Price': price_column})
-    
-    hist_df.to_csv(hist_file, index=False)
-    print("✅ Historical price tracking updated.", flush=True)
+        print("⏩ Not Sunday. Skipping historical price update.", flush=True)
 
 if __name__ == "__main__":
     save_data()
