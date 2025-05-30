@@ -27,7 +27,7 @@ def get_all_sets():
 def get_cards_for_set(set_name, set_id):
     encoded_set_name = urllib.parse.quote(set_name)
     url = f"https://www.pokedata.io/api/cards?set_name={encoded_set_name}"
-    
+
     attempts = 0
     while attempts < 2:
         response = requests.get(url)
@@ -87,23 +87,23 @@ def save_data():
     sets_df.to_csv(f"data/archive/pokemon_sets_summary_{timestamp}.csv", index=False)
     print("✅ Archive copies saved.", flush=True)
 
-    # Only append to price history on Sundays
-    if datetime.now().weekday() == 6:  # 6 is Sunday
-        print("📈 Sunday detected! Updating historical price tracking.", flush=True)
-        hist_file = "data/pokemon_price_history.csv"
-        price_column = f"Price_{timestamp}"
+    # Historical Tracking in Long Format
+    hist_file = "data/pokemon_price_history.csv"
+    date_today = datetime.now().strftime("%Y-%m-%d")
+
+    if datetime.now().weekday() == 6:  # Only run on Sundays
+        history_rows = cards_df[['id', 'name', 'set_name', 'Price']].copy()
+        history_rows['Date'] = date_today
+        history_rows = history_rows[['id', 'name', 'set_name', 'Date', 'Price']]
+
         if os.path.exists(hist_file):
             hist_df = pd.read_csv(hist_file)
-            latest_prices = cards_df[['id', 'name', 'set_name', 'Price']].rename(columns={'Price': price_column})
-            hist_df = pd.merge(hist_df, latest_prices, on=['id', 'name', 'set_name'], how='outer')
+            hist_df = pd.concat([hist_df, history_rows], ignore_index=True)
         else:
-            hist_df = cards_df[['id', 'name', 'set_name', 'Price']].rename(columns={'Price': price_column})
-        
+            hist_df = history_rows
+
         hist_df.to_csv(hist_file, index=False)
-        print("✅ Historical price tracking updated.", flush=True)
-    else:
-        print("⏩ Not Sunday. Skipping historical price update.", flush=True)
+        print("✅ Historical price tracking updated (long format).", flush=True)
 
 if __name__ == "__main__":
     save_data()
-
