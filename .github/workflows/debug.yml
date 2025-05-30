@@ -1,0 +1,16 @@
+name: Debug Check Data Folder
+
+on:
+  workflow_dispatch:  # Allows you to manually trigger it
+
+jobs:
+  check-data-folder:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: List files in data folder
+        run: |
+          ls -la data/
