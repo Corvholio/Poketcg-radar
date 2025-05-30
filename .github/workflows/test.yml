@@ -28,10 +28,9 @@ jobs:
         env:
           GH_PAT: ${{ secrets.GH_PAT }}
         run: |
-          git config --local user.email "actions@github.com"
-          git config --local user.name "GitHub Actions"
+          git config --global user.email "corvonj2019@gmail.com"
+          git config --global user.name "Corvholio"
           git remote set-url origin https://${{ secrets.GH_PAT }}@github.com/Corvholio/Poketcg-radar.git
-          git push https://${{ secrets.GH_PAT }}@github.com/Corvholio/Poketcg-radar.git HEAD:main
           git add data/archive/*.csv
           git commit -m "Archived dummy update for May 25th" || echo "No changes to commit"
-          git push origin main
+          git push https://${{ secrets.GH_PAT }}@github.com/Corvholio/Poketcg-radar.git HEAD:main
