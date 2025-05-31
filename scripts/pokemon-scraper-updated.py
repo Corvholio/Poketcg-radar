@@ -2,16 +2,10 @@ import os
 import requests
 import pandas as pd
 import time
-import ast
 from datetime import datetime
 import urllib.parse
 
 def extract_avg(stats):
-    if isinstance(stats, str):
-        try:
-            stats = ast.literal_eval(stats)
-        except:
-            stats = []
     if isinstance(stats, list) and stats:
         avg = stats[0].get('avg')
         return avg if avg is not None else 0
@@ -27,7 +21,7 @@ def get_all_sets():
 def get_cards_for_set(set_name, set_id):
     encoded_set_name = urllib.parse.quote(set_name)
     url = f"https://www.pokedata.io/api/cards?set_name={encoded_set_name}"
-
+    
     attempts = 0
     while attempts < 2:
         response = requests.get(url)
@@ -35,6 +29,15 @@ def get_cards_for_set(set_name, set_id):
             cards = response.json()
             if cards and len(cards) > 0:
                 print(f"✅ Successfully fetched {len(cards)} cards for {set_name}", flush=True)
+                # Fetch stats for each card
+                for c in cards:
+                    stats_url = f"https://www.pokedata.io{c['stat_url']}"
+                    stats_response = requests.get(stats_url)
+                    if stats_response.status_code == 200:
+                        stats_data = stats_response.json()
+                        c['Price'] = round(extract_avg(stats_data), 2)
+                    else:
+                        c['Price'] = 0
                 return cards
             else:
                 attempts += 1
@@ -51,7 +54,7 @@ def get_cards_for_set(set_name, set_id):
 def save_data():
     os.makedirs("data/latest", exist_ok=True)
     os.makedirs("data/archive", exist_ok=True)
-    
+
     sets = get_all_sets()
     total_sets = len(sets)
     all_cards = []
@@ -63,8 +66,6 @@ def save_data():
         print(f"[{idx}/{total_sets}] Fetching cards for set: {set_name} (ID: {set_id})", flush=True)
         cards = get_cards_for_set(set_name, set_id)
         if cards:
-            for c in cards:
-                c['Price'] = round(extract_avg(c.get('stats', [])), 2)
             all_cards.extend(cards)
             total_cards = len(cards)
             total_value = sum(c['Price'] for c in cards)
@@ -87,7 +88,7 @@ def save_data():
     sets_df.to_csv(f"data/archive/pokemon_sets_summary_{timestamp}.csv", index=False)
     print("✅ Archive copies saved.", flush=True)
 
-    # Historical Tracking in Long Format
+    # Historical Tracking in Long Format (on Sundays)
     hist_file = "data/pokemon_price_history.csv"
     date_today = datetime.now().strftime("%Y-%m-%d")
 
